@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Uneven Font Maker</title>
+<style>
+:root{--bg:#f6f4ef;--fg:#1c1b19;--mut:#6f6b63;--card:#fff;--line:#dcd8cf;--acc:#1c1b19;--accfg:#fff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#171614;--fg:#f0ede6;--mut:#9a958b;--card:#222120;--line:#3a3834;--acc:#f0ede6;--accfg:#171614}}
+:root[data-theme="dark"]{--bg:#171614;--fg:#f0ede6;--mut:#9a958b;--card:#222120;--line:#3a3834;--acc:#f0ede6;--accfg:#171614}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
+.app{max-width:1100px;margin:0 auto;padding:20px;display:grid;grid-template-columns:340px 1fr;gap:20px}
+@media(max-width:820px){.app{grid-template-columns:1fr}}
+h1{font-size:20px;margin:0 0 4px}.sub{color:var(--mut);margin:0 0 16px;font-size:13px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px}
+.card h2{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);margin:0 0 10px}
+label{display:block;font-size:13px;margin:10px 0 4px}label:first-of-type{margin-top:0}
+input[type=text],input[type=number]{width:100%;padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg);font:inherit}
+input[type=range]{width:100%}
+.row{display:flex;gap:8px;align-items:center}.row span{color:var(--mut);font-size:12px}
+.hint{color:var(--mut);font-size:12px;margin:4px 0 0}
+button{font:inherit;padding:9px 14px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--fg);cursor:pointer}
+button.main{background:var(--acc);color:var(--accfg);border-color:var(--acc);width:100%;font-weight:600}
+button:disabled{opacity:.4;cursor:default}
+.drop{border:2px dashed var(--line);border-radius:10px;padding:16px;text-align:center;color:var(--mut);cursor:pointer}
+.drop.on{border-color:var(--fg)}
+.pv{min-height:90px;padding:10px 4px;outline:none;white-space:pre-wrap;word-break:break-word;line-height:1.15;overflow-x:auto}
+.tag{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.08em}
+#st{font-size:12px;color:var(--mut);margin-top:8px;min-height:18px}
+</style></head><body>
+<div class="app">
+<div>
+<h1>Uneven Font Maker</h1><p class="sub">Upload a font, then add random widths, heights and levels as automatic alternates.</p>
+<div class="card"><h2>1 · Font</h2>
+<div class="drop" id="drop">Click or drop a .ttf / .otf here<br><small id="fn"></small></div>
+<input type="file" id="file" accept=".ttf,.otf" hidden>
+<p class="hint">Use a static font (not variable). Bold or Black weights look best.</p></div>
+<div class="card"><h2>2 · Customize</h2>
+<label>Alternates per letter: <b id="nv">5</b></label>
+<input class="p" type="range" id="n" min="2" max="9" value="5">
+<p class="hint">More alternates, more variety. Letters switch between them automatically as you type.</p>
+<label>Letter width % (min / max)</label>
+<div class="row"><input class="p" type="number" id="w0" value="55"><span>to</span><input class="p" type="number" id="w1" value="170"></div>
+<label>Letter height % (min / max)</label>
+<div class="row"><input class="p" type="number" id="h0" value="90"><span>to</span><input class="p" type="number" id="h1" value="110"></div>
+<label>Letter level, % of font size (lower / higher)</label>
+<div class="row"><input class="p" type="number" id="l0" value="-3" step="0.5"><span>to</span><input class="p" type="number" id="l1" value="3" step="0.5"></div>
+<p class="hint">Negative sits below the line, positive above it.</p>
+<label>Letter spacing, % of font size (tighter / looser)</label>
+<div class="row"><input class="p" type="number" id="sp0" value="0" step="0.5"><span>to</span><input class="p" type="number" id="sp1" value="0" step="0.5"></div>
+<p class="hint">Random gap between neighbouring letters. Try -3 to 6. Keep kerning on (Metrics or Auto) in your design app.</p>
+<label>Letters to vary</label>
+<input class="p" type="text" id="ch" value="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789">
+<label>Pattern seed</label>
+<div class="row"><input class="p" type="number" id="seed" value="1"><button id="shuf" type="button">Shuffle</button></div></div>
+<div class="card"><h2>3 · Name &amp; download</h2>
+<label>Font name</label><input class="p" type="text" id="fam" value="My Uneven Font">
+<label>Style name</label><input class="p" type="text" id="sty" value="Random Width">
+<p class="hint">Use a new name for each version so it does not clash in Font Book.</p>
+<div style="height:10px"></div><button class="main" id="dl" disabled>Download .ttf</button><div id="st"></div></div>
+</div>
+<div>
+<div class="card"><h2>Preview</h2>
+<label>Size: <b id="szv">72</b> px</label><input type="range" id="sz" min="24" max="200" value="72">
+<div style="height:10px"></div>
+<div class="tag">Result (type here)</div>
+<div class="pv" id="pv" contenteditable="true" spellcheck="false">KUALA LUMPUR WORK IN PROGRESS</div>
+<div class="tag" style="margin-top:10px">Original</div>
+<div class="pv" id="po"></div></div>
+</div></div>
+<script src="https://cdn.jsdelivr.net/npm/opentype.js@1.3.4/dist/opentype.min.js"></script>
+<script>
+const $=i=>document.getElementById(i);
+const lerp=(a,b,t)=>a+(b-a)*t;
+const u16=v=>[(v>>8)&255,v&255],i16=u16,u32=v=>[(v>>>24)&255,(v>>16)&255,(v>>8)&255,v&255];
+const tag=s=>[...s].map(c=>c.charCodeAt(0));
+const mb=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
+let F=null,G=[],CM=[],origBuf=null,out=null,tm=null,cnt=0;
+
+function toC(cmds){const cs=[];let c,px=0,py=0;
+ for(const m of cmds){
+  if(m.type=='M'){c=[[m.x,m.y,1]];cs.push(c)}
+  else if(m.type=='L')c.push([m.x,m.y,1]);
+  else if(m.type=='Q')c.push([m.x1,m.y1,0],[m.x,m.y,1]);
+  else if(m.type=='C'){
+   const P=[[px,py],[m.x1,m.y1],[m.x2,m.y2],[m.x,m.y]];
+   const l=(a,b,t)=>[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t];
+   const bl=(a,b,d)=>{const q=[l(P[0],P[1],a),l(P[1],P[2],a),l(P[2],P[3],a)],r=[l(q[0],q[1],b),l(q[1],q[2],b)];return l(r[0],r[1],d)};
+   for(let i=0;i<4;i++){const t0=i/4,t1=(i+1)/4,s0=bl(t0,t0,t0),s1=bl(t0,t0,t1),s2=bl(t0,t1,t1),s3=bl(t1,t1,t1);
+    c.push([(3*s1[0]+3*s2[0]-s0[0]-s3[0])/4,(3*s1[1]+3*s2[1]-s0[1]-s3[1])/4,0],[s3[0],s3[1],1])}}
+  if(m.x!==undefined){px=m.x;py=m.y}
+ }
+ return cs.map(c=>{const a=c[0],b=c[c.length-1];if(c.length>1&&b[2]&&a[0]==b[0]&&a[1]==b[1])c.pop();return c}).filter(c=>c.length>2)}
+
+function enc(cs){const p=[],e=[];
+ for(const c of cs){for(const q of c)p.push([Math.round(q[0]),Math.round(q[1]),q[2]]);e.push(p.length-1)}
+ const n=p.length;if(!n)return{b:new Uint8Array(0),n:0,c:0,x0:0,y0:0,x1:0,y1:0};
+ let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;for(const q of p){x0=Math.min(x0,q[0]);x1=Math.max(x1,q[0]);y0=Math.min(y0,q[1]);y1=Math.max(y1,q[1])}
+ const len=10+2*e.length+2+n+4*n,b=new Uint8Array((len+3)&~3),d=new DataView(b.buffer);
+ d.setInt16(0,e.length);d.setInt16(2,x0);d.setInt16(4,y0);d.setInt16(6,x1);d.setInt16(8,y1);
+ let o=10;for(const v of e){d.setUint16(o,v);o+=2}d.setUint16(o,0);o+=2;
+ for(const q of p)b[o++]=q[2];
+ let lx=0;for(const q of p){d.setInt16(o,q[0]-lx);lx=q[0];o+=2}
+ let ly=0;for(const q of p){d.setInt16(o,q[1]-ly);ly=q[1];o+=2}
+ return{b,n,c:e.length,x0,y0,x1,y1}}
+
+const cov=a=>{const r=[];for(let i=0;i<a.length;i++){if(r.length&&a[i]==r[r.length-1][1]+1)r[r.length-1][1]=a[i];else r.push([a[i],a[i],i])}
+ return[...u16(2),...u16(r.length),...r.flatMap(x=>[...u16(x[0]),...u16(x[1]),...u16(x[2])])]};
+const sum=u=>{let s=0;const d=new DataView(u.buffer,u.byteOffset,u.length&~3);for(let i=0;i<(u.length&~3);i+=4)s=(s+d.getUint32(i))>>>0;
+ let r=u.length&3;if(r){let v=0;for(let i=0;i<4;i++)v=(v*256+(i<r?u[(u.length&~3)+i]:0))>>>0;s=(s+v)>>>0}return s};
+const s16=s=>{const r=[];for(let i=0;i<s.length;i++)r.push(...u16(s.charCodeAt(i)));return r};
+
+function build(P){
+ const N=G.length,upem=F.unitsPerEm,n=P.n,rng=mb(P.seed);
+ const gids=[...new Set([...P.chars].filter(ch=>ch.trim()).map(ch=>F.charToGlyphIndex(ch)).filter(x=>x>0))].sort((a,b)=>a-b),B=gids.length;
+ if(!B)throw Error("None of those letters exist in this font.");
+ const pm=()=>{const a=[...Array(n).keys()];for(let i=n-1;i>0;i--){const j=rng()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+ const pw=pm(),ph=pm(),pl=pm();
+ const V=[...Array(n).keys()].map(k=>({sx:lerp(P.w0,P.w1,pw[k]/(n-1))/100,sy:lerp(P.h0,P.h1,ph[k]/(n-1))/100,dy:lerp(P.l0,P.l1,pl[k]/(n-1))/100*upem}));
+ const all=G.slice();
+ for(let k=0;k<n;k++)for(const gi of gids){const o=G[gi],v=V[k];
+  const e=enc(o.cs.map(c=>c.map(p=>[p[0]*v.sx,p[1]*v.sy+v.dy,p[2]])));all.push({...e,adv:Math.max(0,Math.round(o.adv*v.sx))})}
+ // pattern rules
+ const D=n**3<=1500?3:2,key=s=>s.join(),full=new Map(),vis=new Set(),ks=[...Array(n).keys()];
+ let st=[[]];for(let i=0;i<D;i++)st=st.flatMap(s=>ks.map(k=>[...s,k]));
+ for(let j=st.length-1;j>0;j--){const r=rng()*(j+1)|0;[st[j],st[r]]=[st[r],st[j]]}
+ for(let s of st)while(!full.has(key(s))){const ch=ks.filter(c=>c!=s[D-1]),fr=ch.filter(c=>!vis.has(key([...s.slice(1),c]))),pool=fr.length?fr:ch,c=pool[rng()*pool.length|0];
+  full.set(key(s),c);vis.add(key(s));s=[...s.slice(1),c]}
+ const rules=[];
+ for(let d=D;d>=1;d--){let sq=[[]];for(let i=0;i<d;i++)sq=sq.flatMap(s=>ks.map(k=>[...s,k]));
+  for(const s of sq){const nx=d==D?full.get(key(s)):(s[d-1]+1+(rng()*(n-1)|0))%n;rules.push([s.slice().reverse(),nx])}}
+ rules.push([[],rng()*n|0]);
+ // GSUB
+ const vg=k=>gids.map((_,i)=>N+k*B+i),cb=cov(gids),cv=ks.map(k=>cov(vg(k)));
+ const sl=ks.map(k=>[...u16(1),...u16(0),...u16(1),...u16(8),...u16(2),...u16(6+2*B),...u16(B),...vg(k).flatMap(u16),...cb]);
+ const subs=rules.map(([bt,nx])=>{const d=bt.length;let o=16+2*d;const offs=[],body=[];
+  for(const k of bt){offs.push(o);body.push(...cv[k]);o+=cv[k].length}
+  const io=o;body.push(...cb);
+  return[...u16(3),...u16(d),...offs.flatMap(u16),...u16(1),...u16(io),...u16(0),...u16(1),...u16(0),...u16(nx),...body]});
+ const M=subs.length,cl=[...u16(7),...u16(0),...u16(M)];
+ for(let i=0;i<M;i++)cl.push(...u16(6+2*M+8*i));
+ let sp=6+2*M+8*M;
+ subs.forEach((s,i)=>{cl.push(...u16(1),...u16(6),...u32(sp-(6+2*M+8*i)));sp+=s.length});
+ subs.forEach(s=>{for(const b of s)cl.push(b)});
+ const lk=[...sl,cl];let o=2+2*lk.length;const lo=[];for(const l of lk){lo.push(o);o+=l.length}
+ const LL=[...u16(lk.length),...lo.flatMap(u16)];for(const l of lk)for(const b of l)LL.push(b);
+ const SL=[...u16(1),...tag("DFLT"),...u16(8),...u16(4),...u16(0),...u16(0),...u16(0xFFFF),...u16(1),...u16(0)];
+ const FL=[...u16(1),...tag("calt"),...u16(8),...u16(0),...u16(1),...u16(n)];
+ const GSUB=[...u16(1),...u16(0),...u16(10),...u16(30),...u16(44),...SL,...FL,...LL];
+ // outlines + metrics
+ let gx0=0,gy0=0,gx1=0,gy1=0,aw=0,mnl=0,mnr=0,mxe=0,mp=0,mc=0,off=0,ax=0;
+ const loca=[],hm=[],gl=[];
+ for(const g of all){loca.push(...u32(off));gl.push(g.b);off+=g.b.length;hm.push(...u16(g.adv),...i16(g.x0));
+  aw=Math.max(aw,g.adv);ax+=g.adv;mp=Math.max(mp,g.n);mc=Math.max(mc,g.c);
+  if(g.n){gx0=Math.min(gx0,g.x0);gy0=Math.min(gy0,g.y0);gx1=Math.max(gx1,g.x1);gy1=Math.max(gy1,g.y1);mnl=Math.min(mnl,g.x0);mnr=Math.min(mnr,g.adv-g.x1);mxe=Math.max(mxe,g.x1)}}
+ loca.push(...u32(off));
+ const glyf=new Uint8Array(off);let q=0;for(const b of gl){glyf.set(b,q);q+=b.length}
+ const asc=Math.round(F.ascender||upem*.8),dsc=Math.round(F.descender||-upem*.2),gap=Math.round((F.tables.hhea&&F.tables.hhea.lineGap)||0);
+ const os2t=F.tables.os2||{};
+ const head=[...u32(0x10000),...u32(0x10000),...u32(0),...u32(0x5F0F3CF5),...u16(1),...u16(upem),...Array(16).fill(0),...i16(gx0),...i16(gy0),...i16(gx1),...i16(gy1),...u16(0),...u16(8),...u16(2),...u16(1),...u16(0)];
+ const hhea=[...u32(0x10000),...i16(asc),...i16(dsc),...i16(gap),...u16(aw),...i16(mnl),...i16(mnr),...i16(mxe),...i16(1),...i16(0),...i16(0),...Array(8).fill(0),...i16(0),...u16(all.length)];
+ const maxp=[...u32(0x10000),...u16(all.length),...u16(mp),...u16(mc),...u16(0),...u16(0),...u16(2),...Array(16).fill(0)];
+ const os2=[...u16(4),...i16(ax/all.length|0),...u16(400),...u16(5),...u16(0),...[650,600,0,75,650,600,0,350,50,300].flatMap(i16),...u16(0),...Array(10).fill(0),...u32(1),...u32(0),...u32(0),...u32(0),...tag("NONE"),...u16(0xC0),...u16(32),...u16(0xFFFF),
+  ...i16(asc),...i16(dsc),...i16(gap),...u16(Math.max(gy1,asc)),...u16(Math.max(-gy0,-dsc,0)),...u32(1),...u32(0),...i16(os2t.sxHeight||upem*.5|0),...i16(os2t.sCapHeight||upem*.7|0),...u16(0),...u16(32),...u16(D+1)];
+ const cm=[...new Map(CM)].sort((a,b)=>a[0]-b[0]).slice(0,8000),sc=cm.length+1,mx=Math.floor(Math.log2(sc)),sr=2*2**mx;
+ const c4=[...u16(4),...u16(16+8*sc),...u16(0),...u16(sc*2),...u16(sr),...u16(mx),...u16(2*sc-sr),
+  ...cm.flatMap(x=>u16(x[0])),...u16(0xFFFF),...u16(0),...cm.flatMap(x=>u16(x[0])),...u16(0xFFFF),
+  ...cm.flatMap(x=>u16((x[1]-x[0])&0xFFFF)),...u16(1),...cm.flatMap(()=>u16(0)),...u16(0)];
+ const cmap=[...u16(0),...u16(1),...u16(3),...u16(1),...u32(12),...c4];
+ const post=[...u32(0x30000),...u32(0),...i16(-100),...i16(50),...u32(0),...Array(16).fill(0)];
+ const fam=P.fam.trim()||"Font",sty=P.sty.trim()||"Regular",fullName=fam+" "+sty,ps=fam.replace(/[^A-Za-z0-9]/g,"")+"-"+sty.replace(/[^A-Za-z0-9]/g,"");
+ const nm=[[1,fullName],[2,"Regular"],[3,ps+";Uneven"],[4,fullName],[5,"Version 1.000"],[6,ps],[16,fam],[17,sty]];
+ let so=0;const recs=[],strs=[];for(const [id,t] of nm){const s=s16(t);recs.push(...u16(3),...u16(1),...u16(0x409),...u16(id),...u16(s.length),...u16(so));strs.push(...s);so+=s.length}
+ const name=[...u16(0),...u16(nm.length),...u16(6+12*nm.length),...recs,...strs];
+ let GP=null;
+ if(P.s0||P.s1){
+  const r2=mb(P.seed*7919+13),nv=n+1,recs=[];
+  for(let i=0;i<nv;i++)for(let j=0;j<nv;j++)recs.push(...i16(i&&j?Math.round(lerp(P.s0,P.s1,r2())/100*upem):0));
+  const cd=[...u16(2),...u16(n),...ks.flatMap(k=>[...u16(N+k*B),...u16(N+k*B+B-1),...u16(k+1)])];
+  const cvv=cov([...Array(n*B).keys()].map(i=>N+i)),hd=16+recs.length;
+  const sub=[...u16(2),...u16(hd),...u16(4),...u16(0),...u16(hd+cvv.length),...u16(hd+cvv.length),...u16(nv),...u16(nv),...recs,...cvv,...cd];
+  const FL2=[...u16(1),...tag("kern"),...u16(8),...u16(0),...u16(1),...u16(0)];
+  const LL2=[...u16(1),...u16(4),...u16(2),...u16(0),...u16(1),...u16(8),...sub];
+  GP=[...u16(1),...u16(0),...u16(10),...u16(30),...u16(44),...SL,...FL2,...LL2];
+ }
+ const T={GSUB,...(GP?{GPOS:GP}:{}),"OS/2":os2,cmap,glyf,head,hhea,hmtx:hm,loca,maxp,name,post},tn=Object.keys(T).sort();
+ const bs=tn.map(k=>T[k] instanceof Uint8Array?T[k]:Uint8Array.from(T[k]));
+ let pos=12+16*tn.length;const dir=[],offs=[];
+ bs.forEach((b,i)=>{offs.push(pos);dir.push(...tag(tn[i].padEnd(4," ")),...u32(sum(b)),...u32(pos),...u32(b.length));pos+=(b.length+3)&~3});
+ const sr2=16*2**Math.floor(Math.log2(tn.length));
+ const file=new Uint8Array(pos);file.set([...u32(0x10000),...u16(tn.length),...u16(sr2),...u16(Math.floor(Math.log2(tn.length))),...u16(16*tn.length-sr2),...dir],0);
+ bs.forEach((b,i)=>file.set(b,offs[i]));
+ const hi=tn.indexOf("head");new DataView(file.buffer).setUint32(offs[hi]+8,(0xB1B0AFBA-sum(file))>>>0);
+ return{file,glyphs:all.length,D};
+}
+
+function params(){const v=id=>+$(id).value;
+ const mm=(a,b)=>[Math.min(v(a),v(b)),Math.max(v(a),v(b))],w=mm("w0","w1"),h=mm("h0","h1"),l=mm("l0","l1"),sp=mm("sp0","sp1");
+ return{n:Math.max(2,Math.min(9,v("n")|0)),w0:w[0],w1:w[1],h0:h[0],h1:h[1],l0:l[0],l1:l[1],s0:sp[0],s1:sp[1],seed:v("seed")|0,chars:$("ch").value,fam:$("fam").value,sty:$("sty").value}}
+
+async function run(){
+ if(!F)return;
+ try{
+  const r=build(params());out=r.file;
+  const nmF="PV"+(++cnt),f=new FontFace(nmF,out.slice().buffer);await f.load();document.fonts.add(f);
+  $("pv").style.fontFamily=`"${nmF}"`;$("pv").style.fontFeatureSettings='"calt" 1';
+  $("dl").disabled=false;$("st").textContent=`${r.glyphs} glyphs, ${(out.length/1024).toFixed(0)} KB, pattern memory ${r.D} letters`;
+ }catch(e){out=null;$("dl").disabled=true;$("st").textContent="Error: "+e.message}
+}
+const sch=()=>{clearTimeout(tm);tm=setTimeout(run,300)};
+
+async function loadFile(file){
+ try{
+  $("st").textContent="Reading font…";
+  origBuf=await file.arrayBuffer();F=opentype.parse(origBuf);
+  if(F.tables.fvar)throw Error("Variable fonts are not supported. Use a static weight.");
+  G=[];CM=[];
+  for(let i=0;i<F.glyphs.length;i++){const g=F.glyphs.get(i),cs=toC(g.path.commands),e=enc(cs);G.push({...e,adv:Math.round(g.advanceWidth||0),cs});
+   for(const u of g.unicodes||[])if(u<65535)CM.push([u,i])}
+  $("fn").textContent=file.name;
+  const fo=new FontFace("PVO",origBuf.slice(0));await fo.load();document.fonts.add(fo);
+  $("po").style.fontFamily='"PVO"';$("po").textContent=$("pv").textContent;
+  const base=F.names.fontFamily&&(F.names.fontFamily.en||Object.values(F.names.fontFamily)[0]);
+  if(base&&$("fam").value=="My Uneven Font")$("fam").value=base+" Uneven";
+  run();
+ }catch(e){F=null;$("st").textContent="Error: "+e.message}
+}
+
+$("drop").onclick=()=>$("file").click();
+$("file").onchange=e=>e.target.files[0]&&loadFile(e.target.files[0]);
+["dragover","dragenter"].forEach(t=>document.addEventListener(t,e=>{e.preventDefault();$("drop").classList.add("on")}));
+document.addEventListener("dragleave",()=>$("drop").classList.remove("on"));
+document.addEventListener("drop",e=>{e.preventDefault();$("drop").classList.remove("on");e.dataTransfer.files[0]&&loadFile(e.dataTransfer.files[0])});
+document.querySelectorAll(".p").forEach(el=>el.addEventListener("input",()=>{$("nv").textContent=$("n").value;sch()}));
+$("shuf").onclick=()=>{$("seed").value=1+(Math.random()*9998|0);sch()};
+$("sz").oninput=()=>{$("szv").textContent=$("sz").value;$("pv").style.fontSize=$("po").style.fontSize=$("sz").value+"px"};
+$("pv").addEventListener("input",()=>{$("po").textContent=$("pv").textContent});
+$("pv").style.fontSize=$("po").style.fontSize="72px";$("po").textContent=$("pv").textContent;
+$("dl").onclick=async()=>{
+ if(!out)return;
+ const d=window.claude?await window.claude.use("downloads"):null;
+ const fn=(($("fam").value+"-"+$("sty").value).replace(/[^\w-]+/g,"")||"font")+".ttf";
+ if(!d){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([out],{type:"font/ttf"}));a.download=fn;document.body.appendChild(a);a.click();a.remove();$("st").textContent="Saved "+fn+". Double-click it to install.";return}
+ try{await d.save({filename:fn,data:out.slice()});$("st").textContent="Saved "+fn+". Double-click it to install."}
+ catch(e){if(e&&e.code!=="declined")$("st").textContent="Download failed: "+(e.message||e.code)}
+};
+</script></body></html>
